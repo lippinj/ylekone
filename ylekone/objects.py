@@ -19,11 +19,10 @@ class _Container:
         if key is None:
             return None
         if key not in self._id_to_item:
-            try:
-                item = create(self, key)
-                self._id_to_item[key] = item
-            except ConnectionError:
+            item = create(self, key)
+            if item is None:
                 return None
+            self._id_to_item[key] = item
         return self._id_to_item[key]
 
 
@@ -42,7 +41,7 @@ class Constituencies(_Container):
                 yield c
 
     def __getitem__(self, key: int):
-        return self._get_by_name_or_id(key, Constituency)
+        return self._get_by_name_or_id(key, Constituency.create)
 
     def name_to_id(self, name: str):
         return self._name_to_id.get(name, None)
@@ -52,11 +51,11 @@ class Constituencies(_Container):
 
 
 class Constituency:
-    def __init__(self, container: Constituencies, key: int):
+    def __init__(self, container: Constituencies, key: int, j: dict):
         self.api = container.api
         self.container = container
         self.id = key
-        self.j = Constituency._find(self.container.j, self.id)
+        self.j = j
         self.parties = Parties(self)
         self.candidates = Candidates(self)
         self.questions = Questions(self)
@@ -77,11 +76,11 @@ class Constituency:
         return stats
 
     @staticmethod
-    def _find(j, key):
-        for i in j:
-            if i["id"] == key:
-                return i
-        raise RuntimeError()
+    def create(constituencies, key):
+        for j in constituencies.j:
+            if j["id"] == key:
+                return Constituency(constituencies, key, j)
+        return None
 
 
 class Parties(_Container):
@@ -99,7 +98,7 @@ class Parties(_Container):
                 yield p
 
     def __getitem__(self, key):
-        return self._get_by_name_or_id(key, Party)
+        return self._get_by_name_or_id(key, Party.create)
 
     def name_to_id(self, name: str):
         return self._name_to_id.get(name, None)
@@ -122,7 +121,7 @@ class Candidates(_Container):
                 yield c
 
     def __getitem__(self, key):
-        return self._get_by_id(key, Candidate)
+        return self._get_by_id(key, Candidate.create)
 
     def find(self, name):
         return [c for c in self if c.full_name == name]
@@ -142,14 +141,14 @@ class Questions(_Container):
                     yield q
 
     def __getitem__(self, key):
-        return self._get_by_id(key, Question)
+        return self._get_by_id(key, Question.create)
 
 
 class Party:
-    def __init__(self, parent, key):
-        self.parent = parent
+    def __init__(self, parties: Parties, key: int, j: dict):
+        self.parties = parties
         self.id = key
-        self.j = Party._find(self.parent.j, self.id)
+        self.j = j
 
     def __repr__(self):
         return f"Party({self.id}, {self.name} ({self.abbreviation}))"
@@ -163,15 +162,18 @@ class Party:
         return self.j["short_name_fi"]
 
     @staticmethod
-    def _find(j, key):
-        return next(i for i in j if i["id"] == key)
+    def create(parties, key):
+        for j in parties.j:
+            if j["id"] == key:
+                return Party(parties, key, j)
+        return None
 
 
 class Question:
-    def __init__(self, parent, key):
+    def __init__(self, parent: Questions, key: int, j: dict):
         self.parent = parent
         self.id = key
-        self.j = Question._find(self.parent.j, self.id)
+        self.j = j
 
     def __repr__(self):
         return f'Question({self.id}, "{self.text[:48]}...")'
@@ -185,20 +187,20 @@ class Question:
         return self.j["type"]
 
     @staticmethod
-    def _find(j, key):
-        for j_category in j:
-            for j_question in j_category["questions"]:
-                if j_question["id"] == key:
-                    return j_question
+    def create(questions, key):
+        for j in questions.j:
+            for j2 in j["questions"]:
+                if j2["id"] == key:
+                    return Question(questions, key, j2)
         raise RuntimeError()
 
 
 class Candidate:
-    def __init__(self, container, key):
+    def __init__(self, container: Candidates, key: int, j: dict):
         self.api = container.api
         self.container = container
         self.id = key
-        self.j = self.api.candidate(container.constituency.id, self.id)
+        self.j = j
         self.answers = Answers(self)
         self.party = self.container.constituency.parties[self.j["party_id"]]
 
@@ -220,6 +222,13 @@ class Candidate:
     @property
     def full_name(self):
         return f"{self.first_name} {self.last_name}"
+
+    @staticmethod
+    def create(candidates, key):
+        j = candidates.api.candidate(candidates.constituency.id, key)
+        if j:
+            return Candidate(candidates, key, j)
+        return None
 
 
 class Answers:

@@ -19,6 +19,8 @@ class StatsByParty:
                 yield question, party, stats
 
     def add(self, question, party, answer):
+        if party is None:  # Esim. puolueisiin sitoutumattomat
+            return
         if question.id not in self.questions:
             self.questions[question.id] = question
         if party.id not in self.parties:
@@ -77,7 +79,7 @@ class PartyStats(GroupStats):
         self.party = party
 
     def __repr__(self):
-        return f"PartyStats({self.party.id}, {self.question.id}, {', '.join(str(e) for e in self.array)})"
+        return f"PartyStats({self.party.id}, {self.question.id}, [{', '.join(str(e) for e in self.array)}])"
 
     @property
     def pretty(self):

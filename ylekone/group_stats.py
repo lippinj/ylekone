@@ -18,7 +18,7 @@ class GroupStats:
         return self.array[self.options.index(x)]
 
     def __repr__(self):
-        return f"<GroupStats({','.join(self.array)})>"
+        return f"<GroupStats([{','.join(self.array)}])>"
 
     @property
     def mean(self):
@@ -52,4 +52,4 @@ class GroupStats:
 
     @property
     def pretty_statistics(self):
-        return f":μ:{self.mean:<+5.2f} σ:{self.std:<+5.2f}"
+        return f"μ:{self.mean:<+5.2f} σ:{self.std:<+5.2f}"

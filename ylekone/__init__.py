@@ -12,8 +12,12 @@ from ylekone.objects import (
     Answers,
     Answer,
 )
+from ylekone.public_api import PublicApi
 
 
-def Vaalikone(*args, **kwargs):
-    """Backwards compatibility"""
-    return Constituencies(*args, **kwargs)
+def av25():
+    return Constituencies(PublicApi.av25())
+
+
+def kv25():
+    return Constituencies(PublicApi.kv25())

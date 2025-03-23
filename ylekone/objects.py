@@ -27,8 +27,8 @@ class _Container:
 
 
 class Constituencies(_Container):
-    def __init__(self, api=None):
-        api = api or PublicApi()
+    def __init__(self, api: PublicApi):
+        self.api = api
         super().__init__(api)
         self.j = self.api.constituencies()
         self._name_to_id = {j["name_fi"]: j["id"] for j in self.j}

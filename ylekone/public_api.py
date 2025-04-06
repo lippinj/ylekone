@@ -30,11 +30,15 @@ class PublicApi:
 
     @property
     def cache_dir(self) -> str:
-        return f"{PublicApi.CACHE_ROOT}/{self.election}"
+        return f"{PublicApi.CACHE_ROOT}/{self.election}/{self.kind}"
 
     @property
     def election(self) -> str:
         return self.base_url.split("/vaalikone/")[1].split("/")[0]
+
+    @property
+    def kind(self) -> str:
+        return self.base_url.split("/api/public/")[1].split("/")[0]
 
     @property
     def tail(self) -> str:

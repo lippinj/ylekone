@@ -37,8 +37,7 @@ class Constituencies(_Container):
     def __iter__(self):
         for j in self.j:
             c = self[j["id"]]
-            if c:
-                yield c
+            yield c
 
     def __getitem__(self, key: int):
         return self._get_by_name_or_id(key, Constituency.create)
@@ -94,8 +93,7 @@ class Parties(_Container):
     def __iter__(self):
         for j in self.j:
             p = self[j["id"]]
-            if p:
-                yield p
+            yield p
 
     def __getitem__(self, key):
         return self._get_by_name_or_id(key, Party.create)
@@ -117,8 +115,7 @@ class Candidates(_Container):
     def __iter__(self):
         for j in self.j:
             c = self[j["id"]]
-            if c:
-                yield c
+            yield c
 
     def __getitem__(self, key):
         return self._get_by_id(key, Candidate.create)
@@ -137,8 +134,7 @@ class Questions(_Container):
         for j_category in self.j:
             for j_question in j_category["questions"]:
                 q = self[j_question["id"]]
-                if q:
-                    yield q
+                yield q
 
     def __getitem__(self, key):
         return self._get_by_id(key, Question.create)
@@ -220,6 +216,10 @@ class Candidate:
         return self.j["last_name"]
 
     @property
+    def language(self):
+        return self.j["info"]["language"][f"name_fi"]
+
+    @property
     def full_name(self):
         return f"{self.first_name} {self.last_name}"
 
@@ -240,8 +240,7 @@ class Answers:
     def __iter__(self):
         for key in self.j:
             a = self[int(key)]
-            if a:
-                yield a
+            yield a
 
     def __getitem__(self, key: int):
         if key not in self._id_to_answer:
